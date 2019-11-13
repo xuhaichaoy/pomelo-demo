@@ -13,7 +13,7 @@ var DUPLICATE_ERROR = "Please change your name to login.";
 util = {
 	urlRE: /https?:\/\/([-\w\.]+)+(:\d+)?(\/([^\s]*(\?\S+)?)?)?/g,
 	//  html sanitizer
-	toStaticHTML: function(inputHtml) {
+	toStaticHTML: function (inputHtml) {
 		inputHtml = inputHtml.toString();
 		return inputHtml.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 	},
@@ -21,24 +21,24 @@ util = {
 	//digits is minimum length of output
 	//zeroPad(3, 5); returns "005"
 	//zeroPad(2, 500); returns "500"
-	zeroPad: function(digits, n) {
+	zeroPad: function (digits, n) {
 		n = n.toString();
-		while(n.length < digits)
-		n = '0' + n;
+		while (n.length < digits)
+			n = '0' + n;
 		return n;
 	},
 	//it is almost 8 o'clock PM here
 	//timeString(new Date); returns "19:49"
-	timeString: function(date) {
+	timeString: function (date) {
 		var minutes = date.getMinutes().toString();
 		var hours = date.getHours().toString();
 		return this.zeroPad(2, hours) + ":" + this.zeroPad(2, minutes);
 	},
 
 	//does the argument only contain whitespace?
-	isBlank: function(text) {
+	isBlank: function (text) {
 		var blank = /^\s*$/;
-		return(text.match(blank) !== null);
+		return (text.match(blank) !== null);
 	}
 };
 
@@ -51,11 +51,11 @@ function scrollDown(base) {
 // add message on board
 function addMessage(from, target, text, time) {
 	var name = (target == '*' ? 'all' : target);
-	if(text === null) return;
-	if(time == null) {
+	if (text === null) return;
+	if (time == null) {
 		// if the time is null or undefined, use the current time.
 		time = new Date();
-	} else if((time instanceof Date) === false) {
+	} else if ((time instanceof Date) === false) {
 		// if it's a timestamp, interpret it
 		time = new Date(time);
 	}
@@ -77,8 +77,8 @@ function addMessage(from, target, text, time) {
 
 // show tip
 function tip(type, name) {
-	var tip,title;
-	switch(type){
+	var tip, title;
+	switch (type) {
 		case 'online':
 			tip = name + ' is online now.';
 			title = 'Online Notify';
@@ -92,13 +92,13 @@ function tip(type, name) {
 			title = 'Message Notify';
 			break;
 	}
-	var pop=new Pop(title, tip);
+	var pop = new Pop(title, tip);
 };
 
 // init user list
 function initUserList(data) {
 	users = data.users;
-	for(var i = 0; i < users.length; i++) {
+	for (var i = 0; i < users.length; i++) {
 		var slElement = $(document.createElement("option"));
 		slElement.attr("value", users[i]);
 		slElement.text(users[i]);
@@ -117,9 +117,9 @@ function addUser(user) {
 // remove user from user list
 function removeUser(user) {
 	$("#usersList option").each(
-		function() {
-			if($(this).val() === user) $(this).remove();
-	});
+		function () {
+			if ($(this).val() === user) $(this).remove();
+		});
 };
 
 // set your name
@@ -158,17 +158,18 @@ function showChat() {
 
 // query connector
 function queryEntry(uid, callback) {
+	console.log(uid)
 	var route = 'gate.gateHandler.queryEntry';
 	pomelo.init({
 		host: window.location.hostname,
 		port: 3014,
 		log: true
-	}, function() {
+	}, function () {
 		pomelo.request(route, {
 			uid: uid
-		}, function(data) {
+		}, function (data) {
 			pomelo.disconnect();
-			if(data.code === 500) {
+			if (data.code === 500) {
 				showError(LOGIN_ERROR);
 				return;
 			}
@@ -177,27 +178,28 @@ function queryEntry(uid, callback) {
 	});
 };
 
-$(document).ready(function() {
+$(document).ready(function () {
 	//when first time into chat room.
 	showLogin();
 
 	//wait message from the server.
-	pomelo.on('onChat', function(data) {
+	pomelo.on('onChat', function (data) {
+		console.log(data)
 		addMessage(data.from, data.target, data.msg);
 		$("#chatHistory").show();
-		if(data.from !== username)
+		if (data.from !== username)
 			tip('message', data.from);
 	});
 
 	//update user list
-	pomelo.on('onAdd', function(data) {
+	pomelo.on('onAdd', function (data) {
 		var user = data.user;
 		tip('online', user);
 		addUser(user);
 	});
 
 	//update user list
-	pomelo.on('onLeave', function(data) {
+	pomelo.on('onLeave', function (data) {
 		var user = data.user;
 		tip('offline', user);
 		removeUser(user);
@@ -205,38 +207,38 @@ $(document).ready(function() {
 
 
 	//handle disconect message, occours when the client is disconnect with servers
-	pomelo.on('disconnect', function(reason) {
+	pomelo.on('disconnect', function (reason) {
 		showLogin();
 	});
 
 	//deal with login button click.
-	$("#login").click(function() {
+	$("#login").click(function () {
 		username = $("#loginUser").attr("value");
 		rid = $('#channelList').val();
 
-		if(username.length > 20 || username.length == 0 || rid.length > 20 || rid.length == 0) {
+		if (username.length > 20 || username.length == 0 || rid.length > 20 || rid.length == 0) {
 			showError(LENGTH_ERROR);
 			return false;
 		}
 
-		if(!reg.test(username) || !reg.test(rid)) {
+		if (!reg.test(username) || !reg.test(rid)) {
 			showError(NAME_ERROR);
 			return false;
 		}
 
 		//query entry of connection
-		queryEntry(username, function(host, port) {
+		queryEntry(username, function (host, port) {
 			pomelo.init({
 				host: host,
 				port: port,
 				log: true
-			}, function() {
+			}, function () {
 				var route = "connector.entryHandler.enter";
 				pomelo.request(route, {
 					username: username,
 					rid: rid
-				}, function(data) {
-					if(data.error) {
+				}, function (data) {
+					if (data.error) {
 						showError(DUPLICATE_ERROR);
 						return;
 					}
@@ -250,20 +252,20 @@ $(document).ready(function() {
 	});
 
 	//deal with chat mode.
-	$("#entry").keypress(function(e) {
+	$("#entry").keypress(function (e) {
 		var route = "chat.chatHandler.send";
 		var target = $("#usersList").val();
-		if(e.keyCode != 13 /* Return */ ) return;
+		if (e.keyCode != 13 /* Return */) return;
 		var msg = $("#entry").attr("value").replace("\n", "");
-		if(!util.isBlank(msg)) {
+		if (!util.isBlank(msg)) {
 			pomelo.request(route, {
 				rid: rid,
 				content: msg,
 				from: username,
 				target: target
-			}, function(data) {
+			}, function (data) {
 				$("#entry").attr("value", ""); // clear the entry field.
-				if(target != '*' && target != username) {
+				if (target != '*' && target != username) {
 					addMessage(username, target, msg);
 					$("#chatHistory").show();
 				}
